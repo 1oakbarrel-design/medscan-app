@@ -1,0 +1,11 @@
+{
+  "appId": "com.purityapps.medscan",
+  "appName": "MedScan",
+  "webDir": "frontend",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#3b82f6"
+  }
+}

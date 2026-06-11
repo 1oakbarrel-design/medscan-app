@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Scan any pill bottle — AI checks drug interactions instantly. Free for families.">
+<title>MedScan — Medication Interaction Checker</title>
+<meta name="theme-color" content="#3b82f6">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MedScan">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#050A12;--s1:#0A1020;--s2:#101828;--card:#141E2E;
+  --border:#1E2E42;--border2:#2A3E58;--text:#EEF4FF;--muted:#6A7A90;
+  --accent:#3B82F6;--accent2:#60A5FA;
+  --safe:#10B981;--sbg:#021810;--sbr:#064830;
+  --warn:#F59E0B;--wbg:#120E00;--wbr:#3A2A00;
+  --danger:#EF4444;--dbg:#120505;--dbr:#3A0E0E;
+  --severe:#DC2626;
+  --r:16px;--rs:10px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;padding:24px;max-width:400px;margin:0 auto}
+.auth-logo{font-size:28px;font-weight:800;color:var(--accent);margin-bottom:4px;letter-spacing:-1px}
+.auth-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;text-align:center;line-height:1.6}
+.disclaimer-box{background:var(--wbg);border:0.5px solid var(--wbr);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:9px;color:var(--warn);margin-bottom:20px;line-height:1.6;text-align:center}
+.input-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.8px;color:var(--muted);display:block;margin-bottom:5px}
+.input-f{width:100%;background:var(--s1);border:0.5px solid var(--border2);border-radius:var(--rs);padding:12px 13px;font-family:'Syne',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;margin-bottom:12px}
+.input-f:focus{border-color:var(--accent)}
+.btn-primary{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:opacity .2s}
+.btn-primary:hover{opacity:.9}
+.btn-secondary{width:100%;padding:11px;background:transparent;border:0.5px solid var(--border2);border-radius:var(--rs);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;margin-top:8px}
+.auth-err{background:var(--dbg);border:0.5px solid var(--dbr);border-radius:8px;padding:10px 12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--danger);margin-bottom:10px;display:none}
+.auth-switch{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;margin-top:14px;cursor:pointer}
+.auth-switch span{color:var(--accent)}
+#appShell{display:none;flex-direction:column;height:100dvh}
+.hdr{background:var(--s1);border-bottom:0.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-logo{font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+.content{flex:1;overflow-y:auto;padding:16px;padding-bottom:80px}
+.tabs{background:var(--s1);border-top:0.5px solid var(--border);display:flex;position:fixed;bottom:0;left:0;right:0;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;gap:3px;border:none;background:none;cursor:pointer;color:var(--muted);transition:color .2s}
+.tab.active{color:var(--accent)}
+.tab-icon{font-size:20px}
+.tab-lbl{font-family:'DM Mono',monospace;font-size:9px}
+.section-mono{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--accent);margin-bottom:8px}
+.section-title{font-size:15px;font-weight:800;margin-bottom:10px;letter-spacing:-.3px}
+.card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:8px}
+.member-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.member-card:hover{border-color:var(--accent)}
+.member-card.active-member{border-color:var(--accent);background:rgba(59,130,246,.04)}
+.severity-none{color:var(--safe)}
+.severity-mild{color:var(--warn)}
+.severity-moderate{color:var(--warn)}
+.severity-severe{color:var(--danger)}
+.severity-unknown{color:var(--muted)}
+.sev-badge{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:3px 10px;font-family:'DM Mono',monospace;font-size:9px;font-weight:700}
+.sev-none{background:rgba(16,185,129,.1);border:0.5px solid rgba(16,185,129,.3);color:var(--safe)}
+.sev-mild{background:rgba(245,158,11,.1);border:0.5px solid rgba(245,158,11,.3);color:var(--warn)}
+.sev-moderate{background:rgba(245,158,11,.15);border:0.5px solid rgba(245,158,11,.4);color:var(--warn)}
+.sev-severe{background:rgba(239,68,68,.12);border:0.5px solid rgba(239,68,68,.3);color:var(--danger)}
+.med-item{display:flex;align-items:center;gap:10px;background:var(--s2);border:0.5px solid var(--border);border-radius:var(--rs);padding:10px;margin-bottom:6px}
+.med-icon{font-size:18px;flex-shrink:0}
+.med-body{flex:1}
+.med-name{font-size:13px;font-weight:700;margin-bottom:1px}
+.med-detail{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.scan-zone{border:1.5px dashed var(--border2);border-radius:var(--r);padding:28px 20px;text-align:center;cursor:pointer;transition:all .3s;background:linear-gradient(135deg,var(--s1),var(--bg))}
+.scan-zone:hover{border-color:var(--accent);box-shadow:0 0 20px rgba(59,130,246,.1)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border-top:1px solid var(--border2);border-radius:16px 16px 0 0;padding:20px 18px 48px;width:100%;max-width:480px;max-height:88dvh;overflow-y:auto}
+.modal-handle{width:34px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--s1);border:0.5px solid var(--border2);border-radius:99px;padding:9px 18px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);z-index:200;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1}
+.loading{text-align:center;padding:30px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.spinner{width:22px;height:22px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:32px 16px}
+.empty-icon{font-size:40px;margin-bottom:10px;opacity:.25}
+.empty-title{font-size:14px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.empty-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.interaction-card{border:0.5px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:8px}
+.interaction-drugs{font-size:12px;font-weight:700;margin-bottom:4px}
+.interaction-desc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:6px}
+.interaction-rec{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);line-height:1.5}
+</style>
+</head>
+<body>
+
+<div id="authScreen" style="display:flex">
+  <div class="auth-screen">
+    <div class="auth-logo">💊 MedScan</div>
+    <div class="auth-sub">Scan any pill bottle. AI checks interactions instantly.</div>
+    <div class="disclaimer-box">⚠ For informational use only. Not a substitute for professional medical advice. Always consult your pharmacist or doctor.</div>
+    <div id="authErr" class="auth-err"></div>
+    <div id="loginForm">
+      <label class="input-lbl">EMAIL</label>
+      <input class="input-f" type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+      <label class="input-lbl">PASSWORD</label>
+      <input class="input-f" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+      <button class="btn-primary" onclick="login()">Sign In</button>
+      <div class="auth-switch" onclick="showSignup()">No account? <span>Create one free →</span></div>
+    </div>
+    <div id="signupForm" style="display:none;width:100%">
+      <label class="input-lbl">YOUR NAME</label>
+      <input class="input-f" type="text" id="signupName" placeholder="Your name">
+      <label class="input-lbl">EMAIL</label>
+      <input class="input-f" type="email" id="signupEmail" placeholder="you@example.com">
+      <label class="input-lbl">PASSWORD</label>
+      <input class="input-f" type="password" id="signupPassword" placeholder="Min 8 characters">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.5"><input type="checkbox" id="gdprCheck" style="margin-right:6px">I agree to the <a href="/privacy" style="color:var(--accent)">Privacy Policy</a></div>
+      <button class="btn-primary" onclick="signup()">Create Free Account</button>
+      <div class="auth-switch" onclick="showLogin()">Already have an account? <span>Sign in →</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="appShell">
+  <div class="hdr">
+    <div class="hdr-logo">💊 MedScan</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="proPill" style="display:none;background:var(--accent);color:#fff;border-radius:99px;padding:3px 9px;font-family:'DM Mono',monospace;font-size:9px;font-weight:700">PRO</span>
+      <button onclick="switchTab('account')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">👤</button>
+    </div>
+  </div>
+  <div class="content" id="mainContent">
+    <div id="scanTab">
+      <div id="memberSelector" style="margin-bottom:12px"></div>
+      <div class="scan-zone" onclick="triggerScan()" id="scanZone">
+        <div style="font-size:48px;margin-bottom:10px;opacity:.4">💊</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:6px">Scan a pill bottle</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:16px;line-height:1.6">Point camera at any medication label.<br>AI extracts and saves it automatically.</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button onclick="event.stopPropagation();triggerCamera()" style="background:var(--s2);border:0.5px solid var(--border2);border-radius:var(--rs);padding:9px 16px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer">📷 Camera</button>
+          <button onclick="event.stopPropagation();triggerFile()" style="background:var(--s2);border:0.5px solid var(--border2);border-radius:var(--rs);padding:9px 16px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer">📁 Upload</button>
+        </div>
+      </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this.files[0])">
+      <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
+      <div id="scanLoading" style="display:none" class="loading"><div class="spinner"></div>Reading label…</div>
+      <div id="scanResult" style="display:none;margin-top:16px"></div>
+    </div>
+    <div id="cabinetTab" style="display:none"><div id="cabinetContent"></div></div>
+    <div id="checkTab" style="display:none"><div id="checkContent"></div></div>
+    <div id="accountTab" style="display:none"><div id="accountContent"></div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-scan" onclick="switchTab('scan')"><span class="tab-icon">📷</span><span class="tab-lbl">Scan</span></button>
+    <button class="tab" id="tab-cabinet" onclick="switchTab('cabinet')"><span class="tab-icon">💊</span><span class="tab-lbl">Cabinet</span></button>
+    <button class="tab" id="tab-check" onclick="switchTab('check')"><span class="tab-icon">⚠️</span><span class="tab-lbl">Check</span></button>
+    <button class="tab" id="tab-account" onclick="switchTab('account')"><span class="tab-icon">👤</span><span class="tab-lbl">Account</span></button>
+  </div>
+</div>
+
+<!-- Add member modal -->
+<div class="modal-bg" id="addMemberModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="section-title">Add family member</div>
+    <label class="input-lbl">NAME</label><input class="input-f" id="memberName" placeholder="e.g. Mom, Dad, Emma">
+    <label class="input-lbl">DATE OF BIRTH (optional)</label><input class="input-f" type="date" id="memberDob">
+    <label class="input-lbl">KNOWN ALLERGIES (comma separated)</label><input class="input-f" id="memberAllergies" placeholder="e.g. penicillin, sulfa">
+    <button class="btn-primary" onclick="addMember()">Add Member ✓</button>
+    <button class="btn-secondary" onclick="document.getElementById('addMemberModal').classList.remove('open')">Cancel</button>
+  </div>
+</div>
+
+<!-- Pro modal -->
+<div class="modal-bg" id="proModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:6px">MedScan Pro 💊</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:16px;line-height:1.6">Unlimited scans, unlimited family members, and full interaction history.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div onclick="selectProPlan('monthly')" id="pm-monthly" style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:13px;text-align:center;cursor:pointer"><div style="font-size:18px;font-weight:800">$3.99</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">per month</div></div>
+      <div onclick="selectProPlan('yearly')" id="pm-yearly" style="background:var(--card);border:1px solid var(--accent);border-radius:var(--rs);padding:13px;text-align:center;cursor:pointer;position:relative"><div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:8px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap">SAVE 37%</div><div style="font-size:18px;font-weight:800">$29.99</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">per year</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent)">$2.50/mo</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      ${['Unlimited medication scans','Unlimited family members','Full interaction history','Drug info database','Priority support','7-day free trial'].map(f=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)"><span style="color:var(--safe)">✓</span>${f}</div>`).join('')}
+    </div>
+    <button class="btn-primary" id="proCheckoutBtn" onclick="startProCheckout()">💊 Start Free 7-Day Trial</button>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center;margin-top:8px">Cancel anytime · No charge during trial</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'https://medscan-backend-production-13ab.up.railway.app';
+let token = localStorage.getItem('ms_token');
+let refreshToken = localStorage.getItem('ms_refresh');
+let currentUser = null;
+let members = [];
+let activeMemberId = localStorage.getItem('ms_member');
+let selectedProPlan = 'yearly';
+
+async function api(path, opts={}) {
+  const res = await fetch(API_BASE+path, { ...opts, headers: { 'Content-Type':'application/json', ...(token?{Authorization:'Bearer '+token}:{}), ...(opts.headers||{}) } });
+  const data = await res.json().catch(()=>({}));
+  if (res.status===401 && data.code==='TOKEN_EXPIRED' && refreshToken) {
+    try {
+      const r = await fetch(API_BASE+'/auth/refresh', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({refresh_token:refreshToken}) });
+      if (r.ok) { const d = await r.json(); token=d.token; refreshToken=d.refresh_token; localStorage.setItem('ms_token',token); localStorage.setItem('ms_refresh',refreshToken); return api(path,opts); }
+    } catch(e) {}
+    logout(); throw new Error('Session expired');
+  }
+  if (!res.ok) throw data;
+  return data;
+}
+
+function showToast(msg, dur=3000) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur); }
+function showAuthErr(msg) { const e=document.getElementById('authErr'); e.textContent=msg; e.style.display='block'; }
+function clearAuthErr() { document.getElementById('authErr').style.display='none'; }
+function showLogin() { document.getElementById('loginForm').style.display='block'; document.getElementById('signupForm').style.display='none'; clearAuthErr(); }
+function showSignup() { document.getElementById('loginForm').style.display='none'; document.getElementById('signupForm').style.display='block'; clearAuthErr(); }
+
+async function login() {
+  clearAuthErr();
+  const email=document.getElementById('loginEmail').value, password=document.getElementById('loginPassword').value;
+  if (!email||!password) return showAuthErr('Email and password required');
+  try { const d=await api('/auth/login',{method:'POST',body:JSON.stringify({email,password})}); storeAuth(d); showApp(d.user); }
+  catch(e) { showAuthErr(e.error||'Login failed'); }
+}
+
+async function signup() {
+  clearAuthErr();
+  const name=document.getElementById('signupName').value, email=document.getElementById('signupEmail').value, password=document.getElementById('signupPassword').value, gdpr=document.getElementById('gdprCheck').checked;
+  if (!email||!password) return showAuthErr('Email and password required');
+  if (!gdpr) return showAuthErr('Please agree to the Privacy Policy');
+  try { const d=await api('/auth/signup',{method:'POST',body:JSON.stringify({name,email,password,gdpr_consent:true})}); storeAuth(d); showApp(d.user); }
+  catch(e) { showAuthErr(e.error||'Signup failed'); }
+}
+
+function storeAuth(d) { token=d.token; refreshToken=d.refresh_token; localStorage.setItem('ms_token',token); localStorage.setItem('ms_refresh',refreshToken); currentUser=d.user; }
+
+function logout() {
+  localStorage.removeItem('ms_token'); localStorage.removeItem('ms_refresh'); localStorage.removeItem('ms_member');
+  token=null; refreshToken=null; currentUser=null; members=[];
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+}
+
+async function showApp(user) {
+  currentUser=user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appShell').style.display='flex';
+  document.getElementById('proPill').style.display=user.is_pro?'block':'none';
+  await loadMembers();
+  renderMemberSelector();
+}
+
+function switchTab(tab) {
+  ['scan','cabinet','check','account'].forEach(t => { document.getElementById(t+'Tab').style.display=t===tab?'block':'none'; document.getElementById('tab-'+t).classList.toggle('active',t===tab); });
+  if (tab==='cabinet') renderCabinet();
+  if (tab==='check') renderCheck();
+  if (tab==='account') renderAccount();
+  if (navigator.vibrate) navigator.vibrate(8);
+}
+
+async function loadMembers() {
+  try { const d=await api('/members'); members=d.members||[]; if (members.length&&!activeMemberId) activeMemberId=members[0].id; }
+  catch(e) {}
+}
+
+function renderMemberSelector() {
+  const el=document.getElementById('memberSelector');
+  if (!members.length) {
+    el.innerHTML=`<div style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--rs);padding:14px;text-align:center"><div style="font-size:13px;font-weight:700;margin-bottom:6px">Add a family member first</div><div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:10px">Track medications for yourself, your parents, your kids.</div><button class="btn-primary" style="font-size:12px;padding:10px" onclick="document.getElementById('addMemberModal').classList.add('open')">+ Add Member</button></div>`;
+    return;
+  }
+  el.innerHTML=`<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:4px">${members.map(m=>`<button onclick="setActiveMember('${m.id}')" style="background:${m.id===activeMemberId?'var(--accent)':'var(--card)'};color:${m.id===activeMemberId?'#fff':'var(--muted)'};border:0.5px solid var(--border);border-radius:99px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">${m.name} ${m.medication_count?`<span style="opacity:.7">(${m.medication_count})</span>`:''}</button>`).join('')}<button onclick="document.getElementById('addMemberModal').classList.add('open')" style="background:var(--s2);border:0.5px solid var(--border2);border-radius:99px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0">+ Add</button></div>`;
+}
+
+function setActiveMember(id) { activeMemberId=id; localStorage.setItem('ms_member',id); renderMemberSelector(); }
+
+function triggerCamera() { document.getElementById('cameraInput').click(); }
+function triggerFile() { document.getElementById('fileInput').click(); }
+function triggerScan() { if (!activeMemberId) return showToast('Add a family member first'); document.getElementById('fileInput').click(); }
+
+function handleFile(file) {
+  if (!file||!file.type.startsWith('image/')) return showToast('Please select an image');
+  const reader=new FileReader();
+  reader.onload=e=>{ const base64=e.target.result.split(',')[1]; scanLabel(base64,file.type); };
+  reader.readAsDataURL(file);
+}
+
+async function scanLabel(base64, mimeType) {
+  if (!activeMemberId) { showToast('Select a family member first'); return; }
+  document.getElementById('scanResult').style.display='none';
+  document.getElementById('scanLoading').style.display='block';
+  if (navigator.vibrate) navigator.vibrate(8);
+  try {
+    const d=await api('/scan/label',{method:'POST',body:JSON.stringify({image_base64:base64,mime_type:mimeType,member_id:activeMemberId})});
+    document.getElementById('scanLoading').style.display='none';
+    renderScanResult(d);
+    await loadMembers(); renderMemberSelector();
+    if (navigator.vibrate) navigator.vibrate([10,40,10]);
+  } catch(e) {
+    document.getElementById('scanLoading').style.display='none';
+    if (e.code==='LIMIT_REACHED') document.getElementById('proModal').classList.add('open');
+    else if (e.code === 'LIMIT_REACHED') {
+      document.getElementById('proModal').classList.add('open');
+      showToast('3 free scans used this month — upgrade for unlimited');
+    } else showToast('⚠ '+(e.error||'Scan failed'));
+  }
+}
+
+function renderScanResult(d) {
+  const sevClass=d.severity?'sev-'+d.severity:'';
+  document.getElementById('scanResult').style.display='block';
+  document.getElementById('scanResult').innerHTML=`
+    <div class="card">
+      <div style="font-size:20px;font-weight:800;margin-bottom:4px">${d.drug_name||'Medication'}</div>
+      ${d.generic_name?`<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px">${d.generic_name}</div>`:''}
+      ${d.purpose?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:10px;line-height:1.5">→ ${d.purpose}</div>`:''}
+      ${d.dosage?`<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:3px">Dosage: ${d.dosage}</div>`:''}
+      ${d.frequency?`<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px">Frequency: ${d.frequency}</div>`:''}
+      ${(d.warnings||[]).length?`<div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.5px;color:var(--warn);margin-bottom:4px">WARNINGS</div>${d.warnings.map(w=>`<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:3px;line-height:1.5">⚠ ${w}</div>`).join('')}`:''}
+      ${(d.do_not_take_with||[]).length?`<div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.5px;color:var(--danger);margin-bottom:4px">AVOID WITH</div>${d.do_not_take_with.map(x=>`<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:2px">✗ ${x}</div>`).join('')}`:''}
+      <div style="margin-top:12px;background:var(--wbg);border:0.5px solid var(--wbr);border-radius:6px;padding:8px;font-family:'DM Mono',monospace;font-size:9px;color:var(--warn);line-height:1.5">${d.disclaimer||''}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" style="flex:1;font-size:12px;padding:10px" onclick="switchTab('cabinet');renderCabinet()">✓ Saved to Cabinet</button>
+      <button class="btn-secondary" style="flex:1;font-size:12px;padding:10px;margin:0" onclick="switchTab('check');renderCheck()">⚠ Check Interactions</button>
+    </div>`;
+}
+
+async function renderCabinet() {
+  const el=document.getElementById('cabinetContent');
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Loading…</div>';
+  if (!activeMemberId||!members.length) { el.innerHTML='<div class="empty"><div class="empty-icon">💊</div><div class="empty-title">No member selected</div><div class="empty-sub">Add a family member to manage their medications.</div></div>'; return; }
+  try {
+    const d=await api(`/members/${activeMemberId}`);
+    const meds=d.medications||[];
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="section-title">${d.member.name}'s Cabinet</div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${meds.length} med${meds.length!==1?'s':''}</span>
+      </div>
+      ${meds.length?meds.map(m=>`<div class="med-item"><div class="med-icon">💊</div><div class="med-body"><div class="med-name">${m.name}</div><div class="med-detail">${m.dosage||''} ${m.frequency?'· '+m.frequency:''} ${m.purpose?'· '+m.purpose:''}</div></div><button onclick="removeMed('${m.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`).join('') : '<div class="empty"><div class="empty-icon">💊</div><div class="empty-title">No medications yet</div><div class="empty-sub">Scan a pill bottle to add it to this cabinet.</div><button class="btn-primary" style="font-size:12px;padding:10px" onclick="switchTab(\'scan\')">📷 Scan a Pill Bottle</button></div>'}`;
+  } catch(e) { el.innerHTML='<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Could not load</div></div>'; }
+}
+
+async function removeMed(id) {
+  if (!confirm('Remove this medication?')) return;
+  try { await api(`/members/${activeMemberId}/medications/${id}`,{method:'DELETE'}); renderCabinet(); showToast('✓ Removed'); }
+  catch(e) { showToast('Failed'); }
+}
+
+async function renderCheck() {
+  const el=document.getElementById('checkContent');
+  if (!activeMemberId||!members.length) { el.innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">No member selected</div></div>'; return; }
+  const member=members.find(m=>m.id===activeMemberId);
+  if (!member||member.medication_count<2) {
+    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Need at least 2 medications</div><div class="empty-sub">Add ${member?.medication_count===1?'one more medication':'medications'} to ${member?.name||'this member'}'s cabinet to check for interactions.</div><button class="btn-primary" style="font-size:12px;padding:10px" onclick="switchTab('scan')">📷 Scan a Pill Bottle</button></div>`;
+    return;
+  }
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Checking interactions…</div>';
+  try {
+    const d=await api('/scan/interactions',{method:'POST',body:JSON.stringify({member_id:activeMemberId})});
+    const sevColors={none:'var(--safe)',mild:'var(--warn)',moderate:'var(--warn)',severe:'var(--danger)'};
+    const sevEmoji={none:'✅',mild:'⚠️',moderate:'⚠️',severe:'🚨'};
+    el.innerHTML=`
+      <div class="section-title">Interaction Check</div>
+      <div class="card" style="margin-bottom:12px;border-color:${sevColors[d.severity]||'var(--border)'}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:24px">${sevEmoji[d.severity]||'⚠️'}</span>
+          <div>
+            <div style="font-size:14px;font-weight:800">${d.severity==='none'?'No interactions found':d.severity.charAt(0).toUpperCase()+d.severity.slice(1)+' interaction risk'}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${d.medications_checked?.length||0} medications checked</div>
+          </div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:8px">${d.summary||''}</div>
+        ${d.see_doctor?`<div style="background:var(--dbg);border:0.5px solid var(--dbr);border-radius:6px;padding:8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--danger)">🚨 Consult your doctor or pharmacist about these interactions before continuing this medication combination.</div>`:''}
+      </div>
+      ${(d.interactions||[]).map(i=>`<div class="interaction-card" style="border-color:${i.severity==='severe'?'var(--dbr)':i.severity==='moderate'?'var(--wbr)':'var(--border)'}">
+        <div class="interaction-drugs">${i.drug_a} + ${i.drug_b}</div>
+        <div style="margin-bottom:6px"><span class="sev-badge sev-${i.severity}">${i.severity}</span></div>
+        <div class="interaction-desc">${i.description}</div>
+        ${i.recommendation?`<div class="interaction-rec">→ ${i.recommendation}</div>`:''}
+      </div>`).join('')}
+      <div style="background:var(--wbg);border:0.5px solid var(--wbr);border-radius:var(--rs);padding:10px;font-family:'DM Mono',monospace;font-size:9px;color:var(--warn);line-height:1.6;margin-top:8px">${d.disclaimer||''}</div>
+      <button class="btn-primary" style="margin-top:12px;font-size:12px;padding:10px" onclick="renderCheck()">🔄 Re-check</button>`;
+  } catch(e) { el.innerHTML='<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Check failed</div><div class="empty-sub">Please try again.</div></div>'; }
+}
+
+function renderAccount() {
+  document.getElementById('accountContent').innerHTML=`
+    <div class="card" style="margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:3px">${currentUser?.name||currentUser?.email}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:3px">${currentUser?.email}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:${currentUser?.is_pro?'var(--accent)':'var(--muted)'}">${currentUser?.is_pro?'Pro':'Free — 5 scans/month'}</div>
+    </div>
+    <div class="section-mono">FAMILY MEMBERS</div>
+    ${members.map(m=>`<div class="card" style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:13px;font-weight:700">${m.name}</div><div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${m.medication_count} medications</div></div><button onclick="removeMember('${m.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px">Remove</button></div>`).join('')}
+    <button onclick="document.getElementById('addMemberModal').classList.add('open')" class="btn-secondary" style="margin-bottom:8px">+ Add Family Member</button>
+    ${!currentUser?.is_pro?`<button class="btn-primary" onclick="document.getElementById('proModal').classList.add('open')" style="margin-bottom:8px">💊 Upgrade to Pro</button>`:`<button class="btn-secondary" onclick="manageSubscription()" style="margin-bottom:8px">Manage Subscription</button>`}
+    <button class="btn-secondary" onclick="logout()">Sign Out</button>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6">MedScan is for informational use only.<br>Always consult your pharmacist or doctor.</div>`;
+}
+
+async function addMember() {
+  const name=document.getElementById('memberName').value.trim();
+  const dob=document.getElementById('memberDob').value;
+  const allergies=document.getElementById('memberAllergies').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if (!name) return showToast('Name required');
+  try {
+    await api('/members',{method:'POST',body:JSON.stringify({name,dob:dob||null,allergies})});
+    document.getElementById('addMemberModal').classList.remove('open');
+    await loadMembers();
+    if (!activeMemberId&&members.length) activeMemberId=members[0].id;
+    renderMemberSelector();
+    showToast('✓ '+name+' added');
+  } catch(e) {
+    if (e.code==='PRO_REQUIRED') { document.getElementById('addMemberModal').classList.remove('open'); document.getElementById('proModal').classList.add('open'); }
+    else showToast('⚠ '+(e.error||'Failed'));
+  }
+}
+
+async function removeMember(id) {
+  if (!confirm('Remove this member and all their medications?')) return;
+  try { await api(`/members/${id}`,{method:'DELETE'}); await loadMembers(); if (activeMemberId===id) activeMemberId=members[0]?.id||null; renderMemberSelector(); renderAccount(); showToast('✓ Removed'); }
+  catch(e) { showToast('Failed'); }
+}
+
+async function manageSubscription() {
+  try { const d=await api('/stripe/portal',{method:'POST'}); window.location.href=d.portal_url; }
+  catch(e) { showToast('Could not open billing portal'); }
+}
+
+function selectProPlan(plan) {
+  selectedProPlan=plan;
+  document.getElementById('pm-monthly').style.border=plan==='monthly'?'1px solid var(--accent)':'0.5px solid var(--border)';
+  document.getElementById('pm-yearly').style.border=plan==='yearly'?'1px solid var(--accent)':'0.5px solid var(--border)';
+}
+
+async function startProCheckout() {
+  try {
+    const btn=document.getElementById('proCheckoutBtn'); btn.disabled=true; btn.textContent='Loading…';
+    const d=await api('/stripe/checkout',{method:'POST',body:JSON.stringify({plan:selectedProPlan})});
+    window.location.href=d.checkout_url;
+  } catch(e) { showToast('⚠ Checkout failed'); document.getElementById('proCheckoutBtn').disabled=false; document.getElementById('proCheckoutBtn').textContent='💊 Start Free 7-Day Trial'; }
+}
+
+(async()=>{
+  const params=new URLSearchParams(location.search);
+  if (params.get('pro')==='1') showToast('💊 Pro activated!');
+  if (token) {
+    try { const d=await api('/auth/me'); showApp(d.user); }
+    catch(e) {
+      if (refreshToken) {
+        try { const r=await fetch(API_BASE+'/auth/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refreshToken})}); if (r.ok) { const d=await r.json(); storeAuth(d); showApp(d.user); return; } } catch(e2) {}
+      }
+      logout();
+    }
+  }
+})();
+</script>
+
+<!-- Featurebase Feedback Widget -->
+<script>
+  window.fbAsyncInit = function() {
+    Featurebase("initialize_feedback_widget", {
+      organization: "purityapps",
+      theme: "light",
+      placement: "right",
+      email: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.email : null,
+      defaultTitle: "Feedback for MedScan",
+      defaultDescription: "Please describe your bug or feature request for MedScan.",
+      metadata: { app: "MedScan" }
+    });
+  };
+</script>
+<script async defer src="https://do.featurebase.app/js/sdk.js" id="featurebase-sdk"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+</body>
+</html>
